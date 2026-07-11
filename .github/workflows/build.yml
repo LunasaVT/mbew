@@ -1,61 +1,113 @@
-name: Build mbew native
+name: Build mbew native libraries
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
 
 jobs:
   build:
+    name: ${{ matrix.name }}
 
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - name: Windows x64
+            os: windows-latest
             artifact: windows-x86_64
 
-          - os: ubuntu-latest
+          - name: Linux x64
+            os: ubuntu-22.04
             artifact: linux-x86_64
 
-          - os: macos-latest
+          - name: macOS x64
+            os: macos-13
             artifact: macos-x86_64
-
 
     runs-on: ${{ matrix.os }}
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
 
+      #
+      # Dependencies
+      #
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            yasm
+
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install \
+            cmake \
+            ninja \
+            yasm
+
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          choco install ninja yasm -y
+
+
+      #
+      # Configure
+      #
       - name: Configure CMake
+        shell: bash
         run: |
           cmake \
             -S . \
             -B build \
+            -G Ninja \
             -DCMAKE_BUILD_TYPE=Release
 
 
+      #
+      # Build
+      #
       - name: Build
         run: |
           cmake --build build --config Release
 
 
-      - name: Package
+      #
+      # Collect native library
+      #
+      - name: Package artifact
         shell: bash
         run: |
-          mkdir package
+          mkdir -p package
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            cp build/Release/mbew.dll package/
+            find build -name "mbew.dll" -exec cp {} package/ \;
+
           elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            cp build/libmbew.dylib package/
+            find build -name "libmbew.dylib" -exec cp {} package/ \;
+
           else
-            cp build/libmbew.so package/
+            find build -name "libmbew.so" -exec cp {} package/ \;
           fi
 
+          ls -la package
 
-      - name: Upload
+
+      #
+      # Upload
+      #
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: mbew-${{ matrix.artifact }}
