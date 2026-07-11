@@ -1,0 +1,62 @@
+name: Build mbew native
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: windows-x86_64
+
+          - os: ubuntu-latest
+            artifact: linux-x86_64
+
+          - os: macos-latest
+            artifact: macos-x86_64
+
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Configure CMake
+        run: |
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_BUILD_TYPE=Release
+
+
+      - name: Build
+        run: |
+          cmake --build build --config Release
+
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir package
+
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            cp build/Release/mbew.dll package/
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            cp build/libmbew.dylib package/
+          else
+            cp build/libmbew.so package/
+          fi
+
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbew-${{ matrix.artifact }}
+          path: package/
