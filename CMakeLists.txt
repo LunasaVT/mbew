@@ -1,17 +1,25 @@
-cmake_minimum_required(VERSION 3.10)
-project(mbew)
+cmake_minimum_required(VERSION 3.10...4.0)
+
+project(mbew
+    VERSION 1.0
+    LANGUAGES C CXX
+)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 if(WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-option(MBEW32 "TEMPORARY 32bit/X86 flag" OFF)
 
 add_subdirectory("ext/mbew-vpx")
 add_subdirectory("ext/mbew-nestegg")
 add_subdirectory("ext/mbew-ogg")
 add_subdirectory("ext/mbew-vorbis")
 add_subdirectory("ext/mbew-opus")
+
 
 add_library(mbew SHARED
     src/mbew.h
@@ -24,9 +32,47 @@ add_library(mbew SHARED
     src/mbew-string.c
 )
 
-target_include_directories(mbew PUBLIC "src")
 
-target_link_libraries(mbew PUBLIC mbew-vpx mbew-nestegg mbew-vorbis)
-target_compile_definitions(mbew PRIVATE MBEW_BUILD)
+target_compile_definitions(mbew
+    PRIVATE
+        MBEW_BUILD
+)
 
-add_subdirectory("examples")
+
+target_include_directories(mbew
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+
+target_link_libraries(mbew
+    PUBLIC
+        mbew-vpx
+        mbew-nestegg
+        mbew-vorbis
+        mbew-ogg
+        mbew-opus
+)
+
+
+
+if(MSVC)
+    set_target_properties(mbew PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+endif()
+
+
+include(GNUInstallDirs)
+
+install(
+    TARGETS mbew
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(
+    FILES src/mbew.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
