@@ -153,16 +153,16 @@ else()
 endif()
 
 if(NOT WIN32)
-    set(CMAKE_ASM_NASM_COMPILER yasm)
-    set(CMAKE_ASM_NASM_FLAGS "-DPIC")
-    enable_language(ASM_NASM)
-
     add_library(mbew-vpx STATIC
         ${MBEW_VPX_SRC_FILES}
-        ${MBEW_VPX_ASM_FILES}
+    )
+
+    set_target_properties(mbew-vpx PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
     )
 
     target_compile_options(mbew-vpx PRIVATE
+        -fPIC
         $<$<COMPILE_LANGUAGE:C>:-mmmx>
         $<$<COMPILE_LANGUAGE:C>:-mavx>
         $<$<COMPILE_LANGUAGE:C>:-mavx2>
@@ -172,6 +172,7 @@ if(NOT WIN32)
         $<$<COMPILE_LANGUAGE:C>:-mssse3>
         $<$<COMPILE_LANGUAGE:C>:-msse4.1>
     )
+
     target_link_libraries(mbew-vpx PUBLIC m)
 
 # There is a known issue with assembly files and Visual Studio that CMake has not yet resolved
