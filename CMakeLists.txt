@@ -13,7 +13,7 @@ add_subdirectory("ext/mbew-ogg")
 add_subdirectory("ext/mbew-vorbis")
 add_subdirectory("ext/mbew-opus")
 
-add_library(mbew STATIC
+add_library(mbew SHARED
     src/mbew.h
     src/mbew.hpp
     src/mbew-private.h
@@ -27,5 +27,6 @@ add_library(mbew STATIC
 target_include_directories(mbew PUBLIC "src")
 
 target_link_libraries(mbew PUBLIC mbew-vpx mbew-nestegg mbew-vorbis)
+target_compile_definitions(mbew PRIVATE MBEW_BUILD)
 
 add_subdirectory("examples")
