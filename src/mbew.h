@@ -3,11 +3,18 @@
 
 #include <stdint.h>
 
-#if defined(_MSC_VER)
-	#define MBEW_API
-	/* #define MBEW_API __declspec(dllimport) */
+#if defined(_WIN32)
+
+    #if defined(MBEW_BUILD)
+        #define MBEW_API __declspec(dllexport)
+    #else
+        #define MBEW_API __declspec(dllimport)
+    #endif
+
 #else
-	#define MBEW_API
+
+    #define MBEW_API __attribute__((visibility("default")))
+
 #endif
 
 #ifdef  __cplusplus
